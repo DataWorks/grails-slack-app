@@ -51,7 +51,7 @@
 					var obj = JSON.parse(data.body);
 					console.log(obj);
 					
-					if (obj.type == 'message') {
+					if (obj.type == 'message' && obj.subtype  != 'bot_message') {
 						obj.date = new Date();
 						messageListener.notify(obj);
 					} else if (obj.type == 'connect') {
