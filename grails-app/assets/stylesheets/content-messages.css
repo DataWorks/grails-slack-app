@@ -1,0 +1,44 @@
+
+.messages {
+	margin-left: 220px;
+	height: 100%;
+	overflow: auto;
+}
+
+.message {
+	clear: both;
+}
+
+.message-text {
+	margin-left: 56px;
+	font-size: 15px;
+	line-height: 22px;
+}
+
+.user-profile-image {
+	float: left;
+	width: 56px;
+	height: 36px;
+}
+
+.user-profile-image img {
+	margin-left: 10px;
+	margin-right: 10px;
+	width: 36px;
+	height: 36px;
+}
+
+.user-name-time {
+	position: relative;
+	margin-left: 56px;
+}
+
+.user-name-time time {
+	margin-left: 5px;
+	color: gray;
+	font-size: 12px;
+}
+
+.user-name-time .user-name {
+	font-weight: bold;
+}

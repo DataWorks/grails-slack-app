@@ -1,0 +1,38 @@
+.sidebar {
+	float: left;
+	width: 220px;
+	background-color: #0071C5;
+	color: white;
+	font-size: 10pt;
+	height: 100%;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.sidebar ul {
+	list-style: none;
+	line-height: 22px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	cursor: pointer;
+}
+
+.sidebar header {
+	padding-top: 20px;
+	padding-bottom: 5px;
+	margin-left: 10px;
+}
+
+.sidebar ul.ims {
+}
+
+.sidebar ul li.current-channel {
+	background-color: #6AA741;
+}
+
+.sidebar span.unread-count {
+	margin-left: 10px;
+	padding: 1px 5px 1px 5px;
+	border-radius: 25px;
+	background-color: #6AA741;
+}

@@ -1,0 +1,46 @@
+
+#footer {
+	height: 50px;
+	width: 100%;
+	clear: both;
+}
+
+#sidebar-footer {
+	float: left;
+	width: 220px;
+	background-color: #045996;
+	color: white;
+	height: 50px;
+}
+
+.current-user-image {
+	position: absolute;
+	width: 68px;
+	height: 48px;
+}
+
+.current-user-image img {
+	margin-left: 10px;
+	margin-right: 10px;
+	width: 48px;
+	height: 48px;
+}
+
+.current-user-name {
+	margin-left: 78px;
+	margin-top: 15px;
+	font-weight: bold;
+}
+
+#message-footer {
+	margin-left: 220px;
+}
+
+#message-footer textarea {
+	width: calc(100% - 100px);
+	margin-left: 56px;
+	height: 20px;
+	resize: none;
+	border: 2px solid #e0e0e0;
+	padding: 10px;
+}

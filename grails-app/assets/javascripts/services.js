@@ -51,7 +51,7 @@
 					console.log(obj);
 					
 					if (obj.type == 'message') {
-						obj.ts = new Date();
+						obj.date = new Date();
 						messageListener.notify(obj);
 					} else if (obj.type == 'connect') {
 						initialInfoListener.notify(obj);

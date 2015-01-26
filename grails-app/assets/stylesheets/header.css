@@ -1,0 +1,27 @@
+
+#header {
+	height: 50px;
+	width: 100%;
+}
+
+#sidebar-header {
+	float: left;
+	width: 220px;
+	background-color: #045996;
+	color: white;
+	height: 50px;
+}
+
+#sidebar-header h1 {
+	margin-left: 10px;
+	line-height: 50px;
+	font-weight: bold;
+}
+
+#message-header {
+	font-size: 25px;
+	font-weight: bold;
+	padding-left: 10px;
+	padding-top: 10px;
+	margin-left: 220px;
+}
