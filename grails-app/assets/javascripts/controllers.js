@@ -5,11 +5,15 @@
 			$scope.currentChannelType = 'channel';
 			$scope.currentChannelId = '';
 			$scope.currentChannelName = 'general';
+
+			$scope.users = {};
 			
 			$scope.channels = [];
 			$scope.ims = [];
 			$scope.groups = [];
 			$scope.allMessages = {};
+
+			//$scope.allMessages = {'enter test channel here': getAllTestMessages()};
 			
 			var getTestMessage = function(dateOffset) {
 				return {
@@ -28,13 +32,6 @@
 				}
 				return msgs;
 			}
-			
-			$scope.allMessages = {G03EU4C5S: getAllTestMessages()};
-			
-			$scope.users = {};
-			var lastUserId;
-			var lastMessageReceived = new Date();
-			var userChange = true;
 
 			$scope.addMessage = function() {
 				var msgToSend = {
@@ -42,15 +39,21 @@
 					channel: $scope.currentChannelId,
 					text: $scope.message
 				};
-				SlackService.send(msgToSend);
+				var msgToSendId = SlackService.send(msgToSend);
 				$scope.message = "";
+				
+				msgToSend.user = $scope.self.id;
+				msgToSend.ts = msgToSendId;
+				msgToSend.date = new Date();
+				msgToSend.userChange = $scope.isUserChange(msgToSend);
+				$scope.addMessageToChannel(msgToSend);
 			};
 			
 			$scope.changeChannel = function(newChannelType, newChannelId, newChannelName) {
 				$scope.currentChannelType = newChannelType;
 				$scope.currentChannelId = newChannelId;
 				$scope.currentChannelName = newChannelName;
-				$scope.messages = $scope.allMessages[($scope.currentChannelId)] || [];
+				$scope.messages = $scope.getChannelMessages($scope.currentChannelId);
 				$scope.findChannel(newChannelId).unread_count = 0;
 			};
 			
@@ -68,7 +71,31 @@
 						}
 					}
 				}
-			}
+			};
+			
+			$scope.getChannelMessages = function(channelId) {
+				if (!$scope.allMessages[channelId]) {
+					$scope.allMessages[channelId] = [];
+				}
+				return $scope.allMessages[channelId];
+			};
+			
+			$scope.addMessageToChannel = function(message) {
+				$scope.getChannelMessages(message.channel).push(message);
+			};
+			
+			$scope.getLastChannelMessage = function(channelId) {
+				var msgs = $scope.getChannelMessages(channelId);
+				
+				return msgs.length > 0 ? msgs[msgs.length - 1] : null;
+			};
+			
+			$scope.isUserChange = function(newMessage) {
+				var lastMessage = $scope.getLastChannelMessage(newMessage.channel);
+				
+				return lastMessage ? ((newMessage.user != lastMessage.user) || 
+						((new Date()) - lastMessage.date) > (5 * 60 * 1000)) : true;
+			};
 			
 			SlackService.receiveInitialInfo().then(null, null, function(info) {
 				$scope.self = info.self;
@@ -81,14 +108,8 @@
 				});
 			});
 			SlackService.receiveMessage().then(null, null, function(message) {
-				var now = new Date();
-				message.userChange = ((message.user != lastUserId) || (now - lastMessageReceived) > (5 * 60 * 1000));
-				lastUserId = message.user;
-				lastMessageReceived = now;
-				if (!$scope.allMessages[message.channel]) {
-					$scope.allMessages[message.channel] = [];
-				}
-				$scope.allMessages[message.channel].push(message);
+				message.userChange = $scope.isUserChange(message);
+				$scope.addMessageToChannel(message);
 				
 				if ($scope.currentChannelId != message.channel) {
 					$scope.findChannel(message.channel).unread_count++;

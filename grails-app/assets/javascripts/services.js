@@ -37,6 +37,7 @@
 				}));
 				
 				messageIds.push(id);
+				return id;
 			};
 
 			var reconnect = function() {
