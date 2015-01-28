@@ -85,6 +85,46 @@ grails.hibernate.pass.readonly = false
 // configure passing read-only to OSIV session by default, requires "singleSession = false" OSIV mode
 grails.hibernate.osiv.readonly = false
 
+
+grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
+
+grails.plugin.springsecurity.interceptUrlMap = [
+	'/login/**':          ['permitAll'],
+	'/logout/**':         ['permitAll'],
+	'/saml/**':         ['permitAll'],
+	'**/**':         	['ROLE_ADMIN']
+ ]
+ 
+
+
+grails {
+	plugin {
+		springsecurity {
+			userLookup {
+				userDomainClassName = 'test.TestSamlUser'
+				usernamePropertyName = 'username'
+				enabledPropertyName = 'enabled'
+				passwordPropertyName = 'password'
+				authoritiesPropertyName = 'roles'
+				authorityJoinClassName = 'test.TestUserRole'
+			}
+
+			requestMap {
+				className = 'test.TestRequestmap'
+				urlField = 'urlPattern'
+				configAttributeField = 'rolePattern'
+			}
+
+			authority {
+				className = 'test.TestRole'
+				nameField = 'auth'
+			}
+		}
+	}
+}
+
+
+
 grails.plugin.angularjs.version = "1.3.10"
 grails.plugin.angularjs.i18n = ["en-us"]
 grails.plugin.angularjs.modules = ["animate", "cookies", "loader", "mocks", "resource", "route", "sanitize", "touch"]
@@ -121,4 +161,7 @@ log4j.main = {
            'org.springframework',
            'org.hibernate',
            'net.sf.ehcache.hibernate'
+		   
+   debug 'org.springframework.security',
+   'org.opensaml'
 }
