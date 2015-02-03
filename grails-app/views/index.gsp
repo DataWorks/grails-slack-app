@@ -2,18 +2,21 @@
 <html ng-app="slackApp">
 <head>
 	<meta name="layout" content="main" />
-	<asset:stylesheet src="grails-angularjs.css" />
 	<asset:stylesheet src="reset.css" />
+	<asset:stylesheet src="bootstrap-3.3.2-dist/css/bootstrap.css" />
+	<asset:stylesheet src="angular-bootstrap-fix.css" />
+	<asset:stylesheet src="grails-angularjs.css" />
 	<asset:stylesheet src="general.css" />
 	<asset:stylesheet src="header.css" />
 	<asset:stylesheet src="content-sidebar.css" />
 	<asset:stylesheet src="content-messages.css" />
 	<asset:stylesheet src="footer.css" />
+	<asset:stylesheet src="modal.css" />
 </head>
 <body ng-controller="SlackCtrl">
 	<div id="header">
 		<div id="sidebar-header">
-			<h1>Data Works</h1>
+			<p>Data Works</p>
 		</div>
 		<div id="message-header">{{currentChannelName}}</div>
 	</div>
@@ -69,6 +72,7 @@
 	<asset:javascript src="lodash.js" />
 	<asset:javascript src="spring-websocket" />
 	<asset:javascript src="grails-angularjs.js" />
+	<asset:javascript src="ui-bootstrap-tpls-0.12.0.min.js" />
 	<asset:javascript src="app.js" />
 	<asset:javascript src="controllers.js" />
 	<asset:javascript src="services.js" />

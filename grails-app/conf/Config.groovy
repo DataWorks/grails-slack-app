@@ -85,18 +85,34 @@ grails.hibernate.pass.readonly = false
 // configure passing read-only to OSIV session by default, requires "singleSession = false" OSIV mode
 grails.hibernate.osiv.readonly = false
 
+grails.plugin.springsecurity.auth.loginFormUrl = '/saml/login'
+
+grails.plugin.springsecurity.saml.afterLoginUrl = '/'
+grails.plugin.springsecurity.saml.afterLogoutUrl = '/search'
+grails.plugin.springsecurity.saml.metadata.url = '/saml/metadata'
+
+grails.plugin.springsecurity.rejectIfNoRule = true
 
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 
 grails.plugin.springsecurity.interceptUrlMap = [
-	'/login/**':          ['permitAll'],
-	'/logout/**':         ['permitAll'],
-	'/saml/**':         ['permitAll'],
-	'**/**':         	['ROLE_ADMIN']
- ]
- 
-
-
+	'/':                  ['ROLE_USER'],
+	'/index':             ['ROLE_USER'],
+	'/index.gsp':         ['ROLE_USER'],
+	'/assets/**':         ['ROLE_USER'],
+	'/templates/**':      ['ROLE_USER'],
+	'/**/js/**':          ['ROLE_USER'],
+	'/**/css/**':         ['ROLE_USER'],
+	'/**/images/**':      ['ROLE_USER'],
+	'/**/favicon.ico':    ['ROLE_USER'],
+	'/stomp/**':          ['ROLE_USER'],
+	'/slackChannel/**':   ['ROLE_USER'],
+	'/slackToken/**':     ['ROLE_USER'],
+	'/login/**':          ['IS_AUTHENTICATED_ANONYMOUSLY'],
+	'/saml/**':           ['IS_AUTHENTICATED_ANONYMOUSLY'],
+	'/logout/**':         ['IS_AUTHENTICATED_ANONYMOUSLY'],
+]
+	
 grails {
 	plugin {
 		springsecurity {
@@ -162,6 +178,5 @@ log4j.main = {
            'org.hibernate',
            'net.sf.ehcache.hibernate'
 		   
-   debug 'org.springframework.security',
-   'org.opensaml'
+   //debug 'org.springframework.security'
 }

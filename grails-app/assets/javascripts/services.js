@@ -12,7 +12,7 @@
 
 			service.RECONNECT_TIMEOUT = 30000;
 			service.SOCKET_URL = "/grails-slack-app/stomp";
-			service.CHAT_TOPIC = "/topic/slack";
+			service.CHAT_TOPIC = "/user/topic/slack";
 			service.CHAT_BROKER = "/app/slack";
 
 			service.receiveMessage = function() {

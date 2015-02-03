@@ -1,6 +1,6 @@
 (function(angular) {
 	angular.module("slackApp.controllers").controller("SlackCtrl",
-		function($scope, SlackService) {
+		function($scope, $http, $modal, $window, SlackService) {
 			$scope.self = {};
 			$scope.currentChannelType = 'channel';
 			$scope.currentChannelId = '';
@@ -107,6 +107,7 @@
 					$scope.users[user.id] = user;
 				});
 			});
+			
 			SlackService.receiveMessage().then(null, null, function(message) {
 				message.userChange = $scope.isUserChange(message);
 				$scope.addMessageToChannel(message);
@@ -115,5 +116,44 @@
 					$scope.findChannel(message.channel).unread_count++;
 				}
 			});
-		});
+			
+			
+			$http.get('slackToken/currentTokenStatus').
+				success(function(data, status, headers, config) {
+				}).
+				error(function(data, status, headers, config) {
+					var modalInstance = $modal.open({
+						templateUrl: 'templates/tokenModal.tpl.html',
+						controller: 'ModalInstanceCtrl',
+						size: 'md',
+						backdrop: 'static'
+					});
+
+					modalInstance.result.then(function(token) {
+						$http.post('slackToken/updateCurrentToken', {token: token}).
+							success(function() {
+								$window.location.reload();
+							}).
+							error(function() {
+								$modal.open({
+									template: '<div class="error-window">Sorry, there was an error using this token.  Please refresh and try again.</div>',
+									size: 'sm'
+								});
+							})
+					});
+				});
+			
+		}
+	).controller('ModalInstanceCtrl', function ($scope, $modalInstance) {
+			$scope.token = '';
+			
+			$scope.submit = function () {
+				$modalInstance.close($scope.token);
+			};
+	
+			$scope.cancel = function () {
+				$modalInstance.dismiss();
+			};
+		}
+	);
 })(angular);
