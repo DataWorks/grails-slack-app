@@ -12,10 +12,11 @@
 	height: 50px;
 }
 
-#sidebar-header h1 {
+#sidebar-header header {
 	margin-left: 10px;
 	line-height: 50px;
 	font-weight: bold;
+	font-size: 18px;
 }
 
 #message-header {

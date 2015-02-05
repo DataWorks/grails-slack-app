@@ -9,6 +9,10 @@
 	clear: both;
 }
 
+.user-change {
+	margin-top: 10px;
+}
+
 .message-text {
 	margin-left: 56px;
 	font-size: 15px;
@@ -19,6 +23,12 @@
 	float: left;
 	width: 56px;
 	height: 36px;
+}
+
+.user-profile-no-image {
+	float: left;
+	width: 56px;
+	height: 29px;
 }
 
 .user-profile-image img {
@@ -41,4 +51,27 @@
 
 .user-name-time .user-name {
 	font-weight: bold;
+}
+
+.day-divider {
+	position: relative;
+	padding: 10px 0px;
+	text-align: center;
+}
+
+.day-divider hr {
+	position: absolute;
+	border-top: 1px solid #DDD;
+	width: 100%;
+	top: 20px;
+	margin: 0;
+}
+
+.day-divider .day {
+	background: white;
+	padding: 0 10px;
+	display: inline-block;
+	margin: 0 auto;
+	position: relative;
+	font-weight: 900;
 }

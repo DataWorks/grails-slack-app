@@ -1,6 +1,6 @@
 (function(angular, SockJS, Stomp, _, undefined) {
 	angular.module("slackApp.services").service("SlackService",
-		function($q, $timeout) {
+		function($q, $timeout, $http, $modal) {
 			var messageId = 1;
 			var service = {};
 			var messageListener = $q.defer(), initialInfoListener = $q.defer();
@@ -39,6 +39,31 @@
 				messageIds.push(id);
 				return id;
 			};
+			
+			var processMessage = function(obj) {
+				if (obj.type == 'message' && obj.subtype != 'bot_message') {
+					obj.date = new Date(new Number(obj.ts) * 1000);
+					messageListener.notify(obj);
+				} else if (obj.type == 'connect') {
+					initialInfoListener.notify(obj);
+				}
+			};
+			
+			service.getChannelHistory = function(channelType, channelId) {
+				$http.get('slackChannel/listChannelHistory', {params: {channelType: channelType, channel: channelId}}).
+				success(function(data, status, headers, config) {
+					angular.forEach(data.rows, function(obj) {
+						obj.channel = channelId;
+						processMessage(obj);
+					});
+				}).
+				error(function(data, status, headers, config) {
+					$modal.open({
+						template: '<div class="error-window">Sorry, there was an error retrieving channel history.</div>',
+						size: 'sm'
+					});
+				});
+			};
 
 			var reconnect = function() {
 				$timeout(function() {
@@ -49,14 +74,7 @@
 			var startListener = function() {
 				socket.stomp.subscribe(service.CHAT_TOPIC, function(data) {
 					var obj = JSON.parse(data.body);
-					console.log(obj);
-					
-					if (obj.type == 'message' && obj.subtype  != 'bot_message') {
-						obj.date = new Date();
-						messageListener.notify(obj);
-					} else if (obj.type == 'connect') {
-						initialInfoListener.notify(obj);
-					}
+					processMessage(obj);
 				});
 				
 				service.send({

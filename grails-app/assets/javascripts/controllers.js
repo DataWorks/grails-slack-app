@@ -1,6 +1,6 @@
 (function(angular) {
 	angular.module("slackApp.controllers").controller("SlackCtrl",
-		function($scope, $http, $modal, $window, SlackService) {
+		function($scope, $http, $modal, $window, $sce, SlackService) {
 			$scope.self = {};
 			$scope.currentChannelType = 'channel';
 			$scope.currentChannelId = '';
@@ -12,6 +12,7 @@
 			$scope.ims = [];
 			$scope.groups = [];
 			$scope.allMessages = {};
+			$scope.messageHistoryRetrieved = {};
 
 			//$scope.allMessages = {'enter test channel here': getAllTestMessages()};
 			
@@ -46,6 +47,7 @@
 				msgToSend.ts = msgToSendId;
 				msgToSend.date = new Date();
 				msgToSend.userChange = $scope.isUserChange(msgToSend);
+				message.dayChange = $scope.isDayChange(msgToSend);
 				$scope.addMessageToChannel(msgToSend);
 			};
 			
@@ -55,6 +57,9 @@
 				$scope.currentChannelName = newChannelName;
 				$scope.messages = $scope.getChannelMessages($scope.currentChannelId);
 				$scope.findChannel(newChannelId).unread_count = 0;
+				if (!$scope.messageHistoryRetrieved[$scope.currentChannelId]) {
+					SlackService.getChannelHistory($scope.currentChannelType, $scope.currentChannelId);
+				}
 			};
 			
 			$scope.getChannelClass = function(channelType, channelName) {
@@ -93,9 +98,15 @@
 			$scope.isUserChange = function(newMessage) {
 				var lastMessage = $scope.getLastChannelMessage(newMessage.channel);
 				
-				return lastMessage ? ((newMessage.user != lastMessage.user) || 
-						((new Date()) - lastMessage.date) > (5 * 60 * 1000)) : true;
+				return lastMessage ? (lastMessage.subtype != undefined || (newMessage.user != lastMessage.user) || 
+						(newMessage.date - lastMessage.date) > (5 * 60 * 1000)) : true;
 			};
+			
+			$scope.isDayChange = function(newMessage) {
+				var lastMessage = $scope.getLastChannelMessage(newMessage.channel);
+				
+				return lastMessage ? lastMessage.date.toDateString() != newMessage.date.toDateString() : true;
+			}
 			
 			SlackService.receiveInitialInfo().then(null, null, function(info) {
 				$scope.self = info.self;
@@ -106,10 +117,31 @@
 				angular.forEach(info.users, function(user) {
 					$scope.users[user.id] = user;
 				});
+				
+				angular.forEach(info.channels, function(channel) {
+					if (channel.name == 'general') {
+						$scope.changeChannel('channel', channel.id, 'general');
+					}
+				});
+				
 			});
 			
 			SlackService.receiveMessage().then(null, null, function(message) {
 				message.userChange = $scope.isUserChange(message);
+				message.dayChange = $scope.isDayChange(message);
+				
+				if (message.subtype == 'channel_join') {
+					message.text = 'joined ' + $scope.findChannel(message.channel).name;
+				} else {
+					message.text = $sce.trustAsHtml(message.text.replace(/<(.*?)>/g, function(wholeMatch, matchText) {
+						if (/^(#C|@U)/.test(matchText)) {
+							return matchText.split('|')[1];
+						} else {
+							return '<a href="' + matchText + '">' + matchText + '</a>';
+						}
+					}));
+				}
+				
 				$scope.addMessageToChannel(message);
 				
 				if ($scope.currentChannelId != message.channel) {
@@ -117,32 +149,34 @@
 				}
 			});
 			
+			$scope.showTokenModal = function() {
+				var modalInstance = $modal.open({
+					templateUrl: 'templates/tokenModal.tpl.html',
+					controller: 'ModalInstanceCtrl',
+					size: 'md',
+					backdrop: 'static'
+				});
+
+				modalInstance.result.then(function(token) {
+					$http.post('slackToken/updateCurrentToken', {token: token}).
+						success(function() {
+							$window.location.reload();
+						}).
+						error(function() {
+							$modal.open({
+								template: '<div class="error-window">Sorry, there was an error using this token.  Please refresh and try again.</div>',
+								size: 'sm'
+							});
+						})
+				});
+			};
 			
 			$http.get('slackToken/currentTokenStatus').
 				success(function(data, status, headers, config) {
 				}).
 				error(function(data, status, headers, config) {
-					var modalInstance = $modal.open({
-						templateUrl: 'templates/tokenModal.tpl.html',
-						controller: 'ModalInstanceCtrl',
-						size: 'md',
-						backdrop: 'static'
-					});
-
-					modalInstance.result.then(function(token) {
-						$http.post('slackToken/updateCurrentToken', {token: token}).
-							success(function() {
-								$window.location.reload();
-							}).
-							error(function() {
-								$modal.open({
-									template: '<div class="error-window">Sorry, there was an error using this token.  Please refresh and try again.</div>',
-									size: 'sm'
-								});
-							})
-					});
+					$scope.showTokenModal();
 				});
-			
 		}
 	).controller('ModalInstanceCtrl', function ($scope, $modalInstance) {
 			$scope.token = '';

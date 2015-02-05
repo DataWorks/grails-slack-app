@@ -32,14 +32,20 @@
 	font-weight: bold;
 }
 
+.current-user-name a {
+	color: white;
+	cursor: pointer;
+}
+
 #message-footer {
 	margin-left: 220px;
 }
 
 #message-footer textarea {
 	width: calc(100% - 100px);
+	margin-top: 5px;
 	margin-left: 56px;
-	height: 20px;
+	height: 40px;
 	resize: none;
 	border: 2px solid #e0e0e0;
 	padding: 10px;
