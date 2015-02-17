@@ -1,0 +1,14 @@
+<div class="window">
+
+<h3>{{currentChannelName}}</h3>
+<ul class="members">
+	<li ng-repeat="member in currentChannelMembers | orderBy:member">
+		<div ng-cloak>{{member}}</div>
+	</li>
+</ul>
+
+<div class="window-buttons">
+	<button ng-click="cancel()">Close</button>
+</div>
+
+</div>

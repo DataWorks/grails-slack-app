@@ -20,9 +20,25 @@
 }
 
 #message-header {
-	font-size: 25px;
-	font-weight: bold;
 	padding-left: 10px;
 	padding-top: 10px;
 	margin-left: 220px;
 }
+
+.message-header-channel {
+	font-size: 25px;
+	font-weight: bold;
+	float: left;
+	width: calc(100vw - 300px);
+}
+
+.message-header-members {
+	font-size: 10px;
+	font-weight: bold;
+	margin-top: 10px;
+}
+
+.message-header-members a {
+	cursor: pointer;
+}
+

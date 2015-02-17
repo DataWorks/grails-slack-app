@@ -2,7 +2,7 @@
 <html ng-app="slackApp">
 <head>
 	<meta name="layout" content="main" />
-	<title>Slack - Data Works</title>
+	<title>Data Works</title>
 	<asset:stylesheet src="reset.css" />
 	<asset:stylesheet src="bootstrap-3.3.2-dist/css/bootstrap.css" />
 	<asset:stylesheet src="angular-bootstrap-fix.css" />
@@ -17,29 +17,34 @@
 <body ng-controller="SlackCtrl">
 	<div id="header">
 		<div id="sidebar-header">
-			<header>Data Works</header>
+			<header><asset:image src="logo.png" width="150"/></header>
 		</div>
-		<div id="message-header" ng-cloak>{{currentChannelName}}</div>
+		<div id="message-header" ng-cloak>
+			<div class="message-header-channel">{{currentChannelName}}</div>
+			<div class="message-header-members" ng-show="currentChannelMembers">
+				<a ng-click="showCurrentMembers()">{{currentChannelMembers.length}} Members</a>
+			</div>
+		</div>
 	</div>
 	<div id="content">
 		<div class="sidebar">
 			<header>CHANNELS</header>
 			<ul class="channels">
-				<li ng-repeat="channel in channels" ng-class="getChannelClass('channel', channel.name)" 
+				<li ng-repeat="channel in channels | orderBy:name" ng-class="getChannelClass('channel', channel.name)" 
 					ng-click="changeChannel('channel', channel.id, channel.name)">
 					<div ng-cloak>#&nbsp;{{channel.name}}<span class="unread-count" ng-show="channel.unread_count > 0">{{channel.unread_count}}</span></div>
 				</li>
 			</ul>
 			<header>DIRECT MESSAGES</header>
 			<ul class="ims">
-				<li ng-repeat="im in ims" ng-class="getChannelClass('im', users[im.user].name)"
-					ng-click="changeChannel('im', im.id, users[im.user].name)">
-					<div ng-cloak>{{users[im.user].name}}<span class="unread-count" ng-show="im.unread_count > 0">{{im.unread_count}}</span></div>
+				<li ng-repeat="im in ims | orderBy:getImUserName" ng-class="getChannelClass('im', getImUserName(im))"
+					ng-click="changeChannel('im', im.id, getImUserName(im))">
+					<div ng-cloak>{{getImUserName(im)}}<span class="unread-count" ng-show="im.unread_count > 0">{{im.unread_count}}</span></div>
 				</li>
 			</ul>
 			<header>PRIVATE GROUPS</header>
 			<ul class="groups">
-				<li ng-repeat="group in groups" ng-class="getChannelClass('group', group.name)"
+				<li ng-repeat="group in groups | orderBy:name" ng-class="getChannelClass('group', group.name)"
 					ng-click="changeChannel('group', group.id, group.name)">
 					<div ng-cloak>{{group.name}}<span class="unread-count" ng-show="group.unread_count > 0">{{group.unread_count}}</span></div>
 				</li>

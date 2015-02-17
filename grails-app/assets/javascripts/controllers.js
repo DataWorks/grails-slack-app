@@ -5,6 +5,7 @@
 			$scope.currentChannelType = 'channel';
 			$scope.currentChannelId = '';
 			$scope.currentChannelName = 'general';
+			$scope.currentChannelMembers = [];
 
 			$scope.users = {};
 			
@@ -47,18 +48,26 @@
 				msgToSend.ts = msgToSendId;
 				msgToSend.date = new Date();
 				msgToSend.userChange = $scope.isUserChange(msgToSend);
-				message.dayChange = $scope.isDayChange(msgToSend);
+				msgToSend.dayChange = $scope.isDayChange(msgToSend);
 				$scope.addMessageToChannel(msgToSend);
 			};
 			
 			$scope.changeChannel = function(newChannelType, newChannelId, newChannelName) {
+				var newChannel = $scope.findChannel(newChannelId);
+				
 				$scope.currentChannelType = newChannelType;
 				$scope.currentChannelId = newChannelId;
 				$scope.currentChannelName = newChannelName;
+				$scope.currentChannelMembers = newChannel.members ? newChannel.members.map(function(user) {
+					return $scope.users[user].name;
+				}) : [];
 				$scope.messages = $scope.getChannelMessages($scope.currentChannelId);
-				$scope.findChannel(newChannelId).unread_count = 0;
+				newChannel.unread_count = 0;
+				
 				if (!$scope.messageHistoryRetrieved[$scope.currentChannelId]) {
+					$scope.clearChannelMessages($scope.currentChannelId);
 					SlackService.getChannelHistory($scope.currentChannelType, $scope.currentChannelId);
+					$scope.messageHistoryRetrieved[$scope.currentChannelId] = true;
 				}
 			};
 			
@@ -77,11 +86,17 @@
 					}
 				}
 			};
+
+			$scope.clearChannelMessages = function(channelId) {
+				var messages = $scope.allMessages[channelId];
+				messages.splice(0, messages.length);
+			};
 			
 			$scope.getChannelMessages = function(channelId) {
 				if (!$scope.allMessages[channelId]) {
 					$scope.allMessages[channelId] = [];
 				}
+				
 				return $scope.allMessages[channelId];
 			};
 			
@@ -106,6 +121,10 @@
 				var lastMessage = $scope.getLastChannelMessage(newMessage.channel);
 				
 				return lastMessage ? lastMessage.date.toDateString() != newMessage.date.toDateString() : true;
+			};
+			
+			$scope.getImUserName = function(im) {
+				return $scope.users[im.user].name;
 			}
 			
 			SlackService.receiveInitialInfo().then(null, null, function(info) {
@@ -113,7 +132,7 @@
 				$scope.channels = info.channels;
 				$scope.ims = info.ims;
 				$scope.groups = info.groups;
-
+				
 				angular.forEach(info.users, function(user) {
 					$scope.users[user.id] = user;
 				});
@@ -133,13 +152,35 @@
 				if (message.subtype == 'channel_join') {
 					message.text = 'joined ' + $scope.findChannel(message.channel).name;
 				} else {
-					message.text = $sce.trustAsHtml(message.text.replace(/<(.*?)>/g, function(wholeMatch, matchText) {
-						if (/^(#C|@U)/.test(matchText)) {
-							return matchText.split('|')[1];
+					message.text = message.text.replace(/<(.*?)>/g, function(wholeMatch, matchText) {
+						var linkMatch = /^(#|@)(\w+)(\|(.+))?/.exec(matchText);
+						if (linkMatch) {
+							var textToDisplay = linkMatch[0];
+							
+							if (linkMatch[4]) {
+								textToDisplay = linkMatch[4];
+							} else if (linkMatch[1] == '#') {
+								var channel = $scope.findChannel(linkMatch[2]);
+								
+								if (channel) {
+									textToDisplay = channel.name;
+								}
+							} else if (linkMatch[1] == '@') {
+								var user = $scope.users[linkMatch[2]];
+								
+								if (user) {
+									textToDisplay = user.name;
+								}
+							}
+							
+							return textToDisplay;
 						} else {
 							return '<a href="' + matchText + '">' + matchText + '</a>';
 						}
-					}));
+					});
+			
+					message.text = message.text.replace(/(?:\r\n|\r|\n)/g, '<br />');
+					message.text = $sce.trustAsHtml(message.text);
 				}
 				
 				$scope.addMessageToChannel(message);
@@ -148,6 +189,16 @@
 					$scope.findChannel(message.channel).unread_count++;
 				}
 			});
+			
+			$scope.showCurrentMembers = function() {
+				var modalInstance = $modal.open({
+					templateUrl: 'templates/currentMembersModal.tpl.html',
+					scope: $scope,
+					controller: 'ModalInstanceCtrl',
+					size: 'sm',
+					backdrop: 'static'
+				});
+			};
 			
 			$scope.showTokenModal = function() {
 				var modalInstance = $modal.open({

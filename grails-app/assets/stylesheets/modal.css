@@ -1,17 +1,17 @@
+.window {
+	border: 2px solid black;
+	padding: 5px;
+}
+
+.window-buttons {
+	margin-top: 10px;
+}
+
 .error-window {
 	border: 2px solid red;
 	padding: 5px;
 }
 
-.token-window {
-	border: 2px solid black;
-	padding: 5px;
-}
-
 .token-input {
 	width: 400px;
-}
-
-.window-buttons {
-	margin-top: 10px;
 }
