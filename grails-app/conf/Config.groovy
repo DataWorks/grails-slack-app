@@ -7,9 +7,9 @@
 //                             "file:${userHome}/.grails/${appName}-config.properties",
 //                             "file:${userHome}/.grails/${appName}-config.groovy"]
 
-// if (System.properties["${appName}.config.location"]) {
-//    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
-// }
+if (System.properties["${appName}.config.location"]) {
+	grails.config.locations = ["file:" + System.properties["${appName}.config.location"]]
+}
 
 grails.project.groupId = appName // change this to alter the default package name and Maven publishing destination
 
@@ -112,34 +112,16 @@ grails.plugin.springsecurity.interceptUrlMap = [
 	'/saml/**':           ['IS_AUTHENTICATED_ANONYMOUSLY'],
 	'/logout/**':         ['IS_AUTHENTICATED_ANONYMOUSLY'],
 ]
-	
+
 grails {
 	plugin {
 		springsecurity {
 			userLookup {
-				userDomainClassName = 'test.TestSamlUser'
-				usernamePropertyName = 'username'
-				enabledPropertyName = 'enabled'
-				passwordPropertyName = 'password'
-				authoritiesPropertyName = 'roles'
-				authorityJoinClassName = 'test.TestUserRole'
-			}
-
-			requestMap {
-				className = 'test.TestRequestmap'
-				urlField = 'urlPattern'
-				configAttributeField = 'rolePattern'
-			}
-
-			authority {
-				className = 'test.TestRole'
-				nameField = 'auth'
+				userDomainClassName = 'com.dataworks.User'
 			}
 		}
 	}
 }
-
-
 
 grails.plugin.angularjs.version = "1.3.10"
 grails.plugin.angularjs.i18n = ["en-us"]
@@ -147,6 +129,9 @@ grails.plugin.angularjs.modules = ["animate", "cookies", "loader", "mocks", "res
 grails.plugin.angularjs.resourcesDisposition = "head"
 grails.plugin.angularjs.resourcesNominify = true
 grails.plugin.angularjs.autoDownload = true
+
+grails.resources.mappers.uglifyjs.noMunge = true
+grails.assets.minifyJs = false
 
 environments {
     development {
@@ -165,6 +150,7 @@ log4j.main = {
     //appenders {
     //    console name:'stdout', layout:pattern(conversionPattern: '%c{2} %m%n')
     //}
+	'null' name:'stacktrace'
 
     error  'org.codehaus.groovy.grails.web.servlet',        // controllers
            'org.codehaus.groovy.grails.web.pages',          // GSP
