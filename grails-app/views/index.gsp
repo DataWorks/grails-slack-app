@@ -2,7 +2,7 @@
 <html ng-app="slackApp" ng-controller="SlackCtrl">
 <head>
 	<meta name="layout" content="main" />
-	<title>{{pageTitle}}</title>
+	<title ng-bind-html="pageTitle">Data Works</title>
 	<asset:stylesheet src="reset.css" />
 	<asset:stylesheet src="bootstrap-3.3.2-dist/css/bootstrap.css" />
 	<asset:stylesheet src="angular-bootstrap-fix.css" />
