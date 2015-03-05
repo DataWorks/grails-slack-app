@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html ng-app="slackApp">
+<html ng-app="slackApp" ng-controller="SlackCtrl">
 <head>
 	<meta name="layout" content="main" />
-	<title>Data Works</title>
+	<title>{{pageTitle}}</title>
 	<asset:stylesheet src="reset.css" />
 	<asset:stylesheet src="bootstrap-3.3.2-dist/css/bootstrap.css" />
 	<asset:stylesheet src="angular-bootstrap-fix.css" />
@@ -14,7 +14,7 @@
 	<asset:stylesheet src="footer.css" />
 	<asset:stylesheet src="modal.css" />
 </head>
-<body ng-controller="SlackCtrl">
+<body>
 	<div id="header">
 		<div id="sidebar-header">
 			<header><asset:image src="logo.png" width="150"/></header>

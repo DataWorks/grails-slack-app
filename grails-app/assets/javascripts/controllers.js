@@ -1,7 +1,8 @@
 (function(angular) {
 	angular.module("slackApp.controllers").controller("SlackCtrl",
-		function($scope, $http, $modal, $window, $sce, SlackService) {
+		function($scope, $http, $modal, $window, $sce, SlackService, VisibilityChangeService) {
 			$scope.self = {};
+			$scope.pageTitle = 'Data Works';
 			$scope.currentChannelType = 'channel';
 			$scope.currentChannelId = '';
 			$scope.currentChannelName = 'general';
@@ -14,6 +15,9 @@
 			$scope.groups = [];
 			$scope.allMessages = {};
 			$scope.messageHistoryRetrieved = {};
+			
+			$scope.pageVisible = true;
+			$scope.unseenMessages = false;
 
 			//$scope.allMessages = {'enter test channel here': getAllTestMessages()};
 			
@@ -52,12 +56,18 @@
 				$scope.addMessageToChannel(msgToSend);
 			};
 			
+			$scope.updatePageTitle = function() {
+				var prefix = $scope.unseenMessages ? '* ' : '';
+				$scope.pageTitle = prefix + $scope.currentChannelName;
+			};
+			
 			$scope.changeChannel = function(newChannelType, newChannelId, newChannelName) {
 				var newChannel = $scope.findChannel(newChannelId);
 				
 				$scope.currentChannelType = newChannelType;
 				$scope.currentChannelId = newChannelId;
 				$scope.currentChannelName = newChannelName;
+				$scope.updatePageTitle();
 				$scope.currentChannelMembers = newChannel.members ? newChannel.members.map(function(user) {
 					return $scope.users[user].name;
 				}) : [];
@@ -127,17 +137,39 @@
 				return $scope.users[im.user].name;
 			}
 			
+			$scope.$on('visibilityChange', function(evt, hidden) {
+				$scope.pageVisible = !hidden;
+				
+				if (!hidden) {
+					$scope.$apply(function() {
+						$scope.unseenMessages = false;
+						$scope.updatePageTitle();
+					});
+				}
+			});
+			
+			var filterIncomingChannels = function(channels) {
+				var filteredChannels = [];
+				
+				angular.forEach(channels, function(channel) {
+					if (!channel.is_archived) filteredChannels.push(channel);
+				});
+				
+				return filteredChannels;
+			};
+			
 			SlackService.receiveInitialInfo().then(null, null, function(info) {
 				$scope.self = info.self;
-				$scope.channels = info.channels;
-				$scope.ims = info.ims;
-				$scope.groups = info.groups;
+				
+				$scope.channels = filterIncomingChannels(info.channels);
+				$scope.ims = filterIncomingChannels(info.ims);
+				$scope.groups = filterIncomingChannels(info.groups);
 				
 				angular.forEach(info.users, function(user) {
 					$scope.users[user.id] = user;
 				});
 				
-				angular.forEach(info.channels, function(channel) {
+				angular.forEach($scope.channels, function(channel) {
 					if (channel.name == 'general') {
 						$scope.changeChannel('channel', channel.id, 'general');
 					}
@@ -187,6 +219,11 @@
 				
 				if ($scope.currentChannelId != message.channel) {
 					$scope.findChannel(message.channel).unread_count++;
+				}
+				
+				if (!$scope.pageVisible) {
+					$scope.unseenMessages = true;
+					$scope.updatePageTitle();
 				}
 			});
 			
