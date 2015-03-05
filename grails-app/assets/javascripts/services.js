@@ -8,7 +8,6 @@
 				client : null,
 				stomp : null
 			};
-			var messageIds = [];
 
 			service.RECONNECT_TIMEOUT = 30000;
 			service.SOCKET_URL = "/grails-slack-app/stomp";
@@ -36,7 +35,6 @@
 					text: message.text,
 				}));
 				
-				messageIds.push(id);
 				return id;
 			};
 			

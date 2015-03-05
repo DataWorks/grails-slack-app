@@ -75,7 +75,7 @@
 			<div class="current-user-name" ng-cloak><a ng-click="showTokenModal()">{{self.name}}</a></div>
 		</div>
 		<div id="message-footer">
-			<textarea ng-model="message" ng-keyup="$event.keyCode == 13 && addMessage()"></textarea>
+			<textarea ng-model="message" ng-keyup="$event.keyCode == 13 && !$event.ctrlKey && !$event.shiftKey && !$event.altKey && addMessage($event)"></textarea>
 		</div>
 	</div>
 	<asset:javascript src="jquery" />

@@ -49,8 +49,8 @@
 				$scope.message = "";
 				
 				msgToSend.user = $scope.self.id;
-				msgToSend.ts = msgToSendId;
-				msgToSend.date = new Date();
+				msgToSend.ts = Math.round(new Date().getTime() / 1000) + '.' + msgToSendId;
+				msgToSend.date = new Date(new Number(msgToSend.ts) * 1000);
 				msgToSend.userChange = $scope.isUserChange(msgToSend);
 				msgToSend.dayChange = $scope.isDayChange(msgToSend);
 				$scope.addMessageToChannel(msgToSend);
@@ -111,6 +111,9 @@
 			};
 			
 			$scope.addMessageToChannel = function(message) {
+				message.text = message.text.replace(/(?:\r\n|\r|\n)/g, '<br />');
+				message.text = $sce.trustAsHtml(message.text);
+				
 				$scope.getChannelMessages(message.channel).push(message);
 			};
 			
@@ -210,9 +213,6 @@
 							return '<a href="' + matchText + '">' + matchText + '</a>';
 						}
 					});
-			
-					message.text = message.text.replace(/(?:\r\n|\r|\n)/g, '<br />');
-					message.text = $sce.trustAsHtml(message.text);
 				}
 				
 				$scope.addMessageToChannel(message);
