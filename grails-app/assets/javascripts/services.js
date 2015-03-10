@@ -1,16 +1,18 @@
 (function(angular, SockJS, Stomp, _, undefined) {
 	angular.module("slackApp.services").service("SlackService",
-		function($q, $timeout, $http, $modal) {
+		function($q, $timeout, $http, $modal, $window) {
 			var messageId = 1;
 			var service = {};
-			var messageListener = $q.defer(), initialInfoListener = $q.defer();
+			var messageListener = $q.defer(), 
+				presenceChangeListener = $q.defer(), 
+				initialInfoListener = $q.defer();
 			var socket = {
 				client : null,
 				stomp : null
 			};
 
 			service.RECONNECT_TIMEOUT = 30000;
-			service.SOCKET_URL = "/grails-slack-app/stomp";
+			service.SOCKET_URL = $window.location.pathname + "stomp";
 			service.CHAT_TOPIC = "/user/topic/slack";
 			service.CHAT_BROKER = "/app/slack";
 
@@ -18,24 +20,23 @@
 				return messageListener.promise;
 			};
 			
+			service.receivePresenceChange = function() {
+				return presenceChangeListener.promise;
+			};
+			
 			service.receiveInitialInfo = function() {
 				return initialInfoListener.promise;
 			};
 
 			service.send = function(message) {
-				var id = messageId++;
 				var headers = {
 					priority: 9	
 				};
+				message.id = messageId++;
 				
-				socket.stomp.send(service.CHAT_BROKER, headers, JSON.stringify({
-					id: id,
-					type: message.type,
-					channel: message.channel,
-					text: message.text,
-				}));
+				socket.stomp.send(service.CHAT_BROKER, headers, JSON.stringify(message));
 				
-				return id;
+				return message.id;
 			};
 			
 			var processMessage = function(obj) {
@@ -44,6 +45,8 @@
 					messageListener.notify(obj);
 				} else if (obj.type == 'connect') {
 					initialInfoListener.notify(obj);
+				} else if (obj.type == 'presence_change') {
+					presenceChangeListener.notify(obj);
 				}
 			};
 			
@@ -61,6 +64,11 @@
 						size: 'sm'
 					});
 				});
+			};
+			
+			service.markChannel = function(channelType, channelId, timestamp) {
+				$http.get('slackChannel/markChannel', 
+						{params: {channelType: channelType, channel: channelId, timestamp: timestamp}})
 			};
 
 			var reconnect = function() {

@@ -1,6 +1,6 @@
 (function(angular) {
 	angular.module("slackApp.controllers").controller("SlackCtrl",
-		function($scope, $http, $modal, $window, $sce, SlackService, VisibilityChangeService) {
+		function($scope, $http, $modal, $window, $sce, $interval, SlackService, VisibilityChangeService) {
 			$scope.self = {};
 			$scope.pageTitle = 'Data Works';
 			$scope.currentChannelType = 'channel';
@@ -18,6 +18,8 @@
 			
 			$scope.pageVisible = true;
 			$scope.unseenMessages = false;
+			
+			var lastReadMessages = {};
 
 			//$scope.allMessages = {'enter test channel here': getAllTestMessages()};
 			
@@ -67,11 +69,13 @@
 				$scope.currentChannelType = newChannelType;
 				$scope.currentChannelId = newChannelId;
 				$scope.currentChannelName = newChannelName;
+				$scope.unseenMessages = $scope.anyUnreadMessages();
 				$scope.updatePageTitle();
 				$scope.currentChannelMembers = newChannel.members ? newChannel.members.map(function(user) {
 					return $scope.users[user].name;
 				}) : [];
 				$scope.messages = $scope.getChannelMessages($scope.currentChannelId);
+				$scope.updateLastReadMessage();
 				newChannel.unread_count = 0;
 				
 				if (!$scope.messageHistoryRetrieved[$scope.currentChannelId]) {
@@ -87,11 +91,36 @@
 			};
 			
 			$scope.findChannel = function(channelId) {
+				var foundChannel;
+				
+				$scope.iterateChannels(function(channel) {
+					if (channelId == channel.id) {
+						foundChannel = channel;
+						return false;
+					}
+				});
+				
+				return foundChannel;
+			};
+			
+			$scope.anyUnreadMessages = function() {
+				var anyUnread = false;
+				
+				$scope.iterateChannels(function(channel) {
+					if (channel.id != $scope.currentChannelId && channel.unread_count > 0) {
+						anyUnread = true;
+					}
+				});
+				
+				return anyUnread;
+			}
+			
+			$scope.iterateChannels = function(callback) {
 				for (var j = 0; j < 3; j++) {
 					var channelGroup = [$scope.channels, $scope.ims, $scope.groups][j];
 					for (var i = 0; i < channelGroup.length; i++) {
-						if (channelId == channelGroup[i].id) {
-							return channelGroup[i];
+						if (callback(channelGroup[i]) === false) {
+							return;
 						}
 					}
 				}
@@ -138,18 +167,36 @@
 			
 			$scope.getImUserName = function(im) {
 				return $scope.users[im.user].name;
-			}
+			};
+			
+			$scope.getImPresenceClass = function(im) {
+				return $scope.users[im.user].presence == 'active' ? 'active-user' : '';
+			};
 			
 			$scope.$on('visibilityChange', function(evt, hidden) {
 				$scope.pageVisible = !hidden;
 				
 				if (!hidden) {
 					$scope.$apply(function() {
-						$scope.unseenMessages = false;
+						$scope.unseenMessages = $scope.anyUnreadMessages();
 						$scope.updatePageTitle();
+						$scope.updateLastReadMessage();
 					});
 				}
 			});
+			
+			$interval(function() {
+				angular.forEach(lastReadMessages, function(readMessageInfo) {
+					SlackService.markChannel(readMessageInfo.channelType, readMessageInfo.channelId, 
+						readMessageInfo.timestamp);
+				});
+				
+				lastReadMessages = {};
+			}, 10 * 1000);
+			
+			$interval(function() {
+				SlackService.send({type: 'ping'});
+			}, 60 * 1000);
 			
 			var filterIncomingChannels = function(channels) {
 				var filteredChannels = [];
@@ -179,6 +226,16 @@
 				});
 				
 			});
+			
+			$scope.updateLastReadMessage = function() {
+				if ($scope.messages.length > 0) {
+					lastReadMessages[$scope.currentChannelId] = {
+						channelType: $scope.currentChannelType,
+						channelId: $scope.currentChannelId,
+						timestamp: $scope.messages[$scope.messages.length - 1].ts
+					};
+				}
+			};
 			
 			SlackService.receiveMessage().then(null, null, function(message) {
 				message.userChange = $scope.isUserChange(message);
@@ -219,12 +276,19 @@
 				
 				if ($scope.currentChannelId != message.channel) {
 					$scope.findChannel(message.channel).unread_count++;
+				} else if ($scope.pageVisible) {
+					$scope.updateLastReadMessage();
 				}
 				
 				if (!$scope.pageVisible) {
 					$scope.unseenMessages = true;
 					$scope.updatePageTitle();
 				}
+			});
+			
+			SlackService.receivePresenceChange().then(null, null, function(message) {
+				var user = $scope.users[message.user];
+				user.presence = message.presence;
 			});
 			
 			$scope.showCurrentMembers = function() {

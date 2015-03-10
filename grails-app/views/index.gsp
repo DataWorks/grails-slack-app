@@ -3,6 +3,7 @@
 <head>
 	<meta name="layout" content="main" />
 	<title ng-bind-html="pageTitle">Data Works</title>
+	<asset:link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
 	<asset:stylesheet src="reset.css" />
 	<asset:stylesheet src="bootstrap-3.3.2-dist/css/bootstrap.css" />
 	<asset:stylesheet src="angular-bootstrap-fix.css" />
@@ -39,7 +40,7 @@
 			<ul class="ims">
 				<li ng-repeat="im in ims | orderBy:getImUserName" ng-class="getChannelClass('im', getImUserName(im))"
 					ng-click="changeChannel('im', im.id, getImUserName(im))">
-					<div ng-cloak>{{getImUserName(im)}}<span class="unread-count" ng-show="im.unread_count > 0">{{im.unread_count}}</span></div>
+					<div ng-cloak ng-class="getImPresenceClass(im)">{{getImUserName(im)}}<span class="unread-count" ng-show="im.unread_count > 0">{{im.unread_count}}</span></div>
 				</li>
 			</ul>
 			<header>PRIVATE GROUPS</header>

@@ -116,6 +116,10 @@ grails.plugin.springsecurity.interceptUrlMap = [
 grails {
 	plugin {
 		springsecurity {
+			saml {
+				maxAssertionTime = 604800
+				maxAuthenticationAge = 604800
+			}
 			userLookup {
 				userDomainClassName = 'com.dataworks.User'
 			}

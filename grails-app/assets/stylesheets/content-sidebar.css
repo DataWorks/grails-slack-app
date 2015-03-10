@@ -40,3 +40,7 @@
 	border-radius: 25px;
 	background-color: #6AA741;
 }
+
+.sidebar .active-user {
+	font-weight: bold;
+}
