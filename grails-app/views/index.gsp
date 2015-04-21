@@ -53,7 +53,9 @@
 		</div>
 		
 		<div class="messages" scroll-glue>
-			<div ng-repeat="message in messages track by message.ts" class="message" ng-class="{'user-change': message.userChange}">
+			<div ng-if="currentChannelHasMore" ng-cloak><button class="more-msgs-btn" ng-click="showMoreMessages()">Retrieve More Messages</button></div>
+		
+			<div ng-repeat="message in messages track by message.ts" class="message" ng-class="{'user-change': message.userChange, 'unconfirmed': message.unconfirmed}">
 				<div ng-if="message.dayChange" class="day-divider">
 					<hr /><div class="day" ng-cloak>{{message.date | date: 'MMMM d, yyyy (EEEE)'}}</div>
 				</div>

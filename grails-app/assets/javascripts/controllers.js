@@ -6,6 +6,7 @@
 			$scope.currentChannelType = 'channel';
 			$scope.currentChannelId = '';
 			$scope.currentChannelName = 'general';
+			$scope.currentChannelHasMore = false;
 			$scope.currentChannelMembers = [];
 
 			$scope.users = {};
@@ -15,6 +16,7 @@
 			$scope.groups = [];
 			$scope.allMessages = {};
 			$scope.messageHistoryRetrieved = {};
+			$scope.unconfirmedMessages = {};
 			
 			$scope.pageVisible = true;
 			$scope.unseenMessages = false;
@@ -51,11 +53,18 @@
 				$scope.message = "";
 				
 				msgToSend.user = $scope.self.id;
-				msgToSend.ts = Math.round(new Date().getTime() / 1000) + '.' + msgToSendId;
+				msgToSend.ts = $scope.getCurrentTimestamp() + '.' + msgToSendId;
 				msgToSend.date = new Date(new Number(msgToSend.ts) * 1000);
 				msgToSend.userChange = $scope.isUserChange(msgToSend);
 				msgToSend.dayChange = $scope.isDayChange(msgToSend);
+				msgToSend.unconfirmed = true;
+				$scope.unconfirmedMessages[msgToSendId] = msgToSend;
+				$scope.formatMessageHtml(msgToSend);
 				$scope.addMessageToChannel(msgToSend);
+			};
+			
+			$scope.getCurrentTimestamp = function() {
+				return Math.round(new Date().getTime() / 1000);
 			};
 			
 			$scope.updatePageTitle = function() {
@@ -69,6 +78,7 @@
 				$scope.currentChannelType = newChannelType;
 				$scope.currentChannelId = newChannelId;
 				$scope.currentChannelName = newChannelName;
+				$scope.currentChannelHasMore = newChannel.hasMore;
 				$scope.unseenMessages = $scope.anyUnreadMessages();
 				$scope.updatePageTitle();
 				$scope.currentChannelMembers = newChannel.members ? newChannel.members.map(function(user) {
@@ -81,7 +91,7 @@
 				if (!$scope.messageHistoryRetrieved[$scope.currentChannelId]) {
 					$scope.clearChannelMessages($scope.currentChannelId);
 					SlackService.getChannelHistory($scope.currentChannelType, $scope.currentChannelId);
-					$scope.messageHistoryRetrieved[$scope.currentChannelId] = true;
+					$scope.messageHistoryRetrieved[$scope.currentChannelId] = $scope.getCurrentTimestamp();
 				}
 			};
 			
@@ -139,11 +149,27 @@
 				return $scope.allMessages[channelId];
 			};
 			
-			$scope.addMessageToChannel = function(message) {
+			$scope.formatMessageHtml = function(message) {
 				message.text = message.text.replace(/(?:\r\n|\r|\n)/g, '<br />');
 				message.text = $sce.trustAsHtml(message.text);
+			};
+			
+			$scope.addMessageToChannel = function(message) {
+				var messages = $scope.getChannelMessages(message.channel);
+				messages.push(message);
+			};
+			
+			$scope.addHistoricalMessagesToChannel = function(channel, messages, hasMore) {
+				var channelMessages = $scope.getChannelMessages(channel);
+				angular.forEach(messages.reverse(), function(message) {
+					channelMessages.unshift(message);
+				});
 				
-				$scope.getChannelMessages(message.channel).push(message);
+				$scope.findChannel(channel).hasMore = hasMore;
+				
+				if ($scope.currentChannelId == channel) {
+					$scope.currentChannelHasMore = hasMore;
+				}
 			};
 			
 			$scope.getLastChannelMessage = function(channelId) {
@@ -152,15 +178,15 @@
 				return msgs.length > 0 ? msgs[msgs.length - 1] : null;
 			};
 			
-			$scope.isUserChange = function(newMessage) {
-				var lastMessage = $scope.getLastChannelMessage(newMessage.channel);
+			$scope.isUserChange = function(newMessage, lastMessage) {
+				lastMessage = lastMessage || $scope.getLastChannelMessage(newMessage.channel);
 				
 				return lastMessage ? (lastMessage.subtype != undefined || (newMessage.user != lastMessage.user) || 
 						(newMessage.date - lastMessage.date) > (5 * 60 * 1000)) : true;
 			};
 			
-			$scope.isDayChange = function(newMessage) {
-				var lastMessage = $scope.getLastChannelMessage(newMessage.channel);
+			$scope.isDayChange = function(newMessage, lastMessage) {
+				lastMessage = lastMessage || $scope.getLastChannelMessage(newMessage.channel);
 				
 				return lastMessage ? lastMessage.date.toDateString() != newMessage.date.toDateString() : true;
 			};
@@ -202,6 +228,9 @@
 				var filteredChannels = [];
 				
 				angular.forEach(channels, function(channel) {
+					if (channel.unread_count_display == 0) {
+						channel.unread_count = 0;
+					}
 					if (!channel.is_archived) filteredChannels.push(channel);
 				});
 				
@@ -237,9 +266,9 @@
 				}
 			};
 			
-			SlackService.receiveMessage().then(null, null, function(message) {
-				message.userChange = $scope.isUserChange(message);
-				message.dayChange = $scope.isDayChange(message);
+			$scope.processMessage = function(message, lastMessage) {
+				message.userChange = $scope.isUserChange(message, lastMessage);
+				message.dayChange = $scope.isDayChange(message, lastMessage);
 				
 				if (message.subtype == 'channel_join') {
 					message.text = 'joined ' + $scope.findChannel(message.channel).name;
@@ -272,10 +301,32 @@
 					});
 				}
 				
+				$scope.formatMessageHtml(message);
+			};
+			
+			SlackService.receiveHistoricalMessages().then(null, null, function(data) {
+				var lastMessage;
+				
+				angular.forEach(data.messages, function(message) {
+					$scope.processMessage(message, lastMessage);
+					lastMessage = message;
+				});
+				$scope.addHistoricalMessagesToChannel(data.channel, data.messages, data.hasMore);
+			});
+			
+			SlackService.receiveMessage().then(null, null, function(message) {
+				if (message.type == 'confirmation') {
+					$scope.unconfirmedMessages[message.reply_to].unconfirmed = false;
+					return;
+				}
+
+				var channel = $scope.findChannel(message.channel);
+				
+				$scope.processMessage(message);
 				$scope.addMessageToChannel(message);
 				
-				if ($scope.currentChannelId != message.channel) {
-					$scope.findChannel(message.channel).unread_count++;
+				if ($scope.currentChannelId != message.channel && message.ts > channel.last_read) {
+					channel.unread_count++;
 				} else if ($scope.pageVisible) {
 					$scope.updateLastReadMessage();
 				}
@@ -290,6 +341,11 @@
 				var user = $scope.users[message.user];
 				user.presence = message.presence;
 			});
+			
+			$scope.showMoreMessages = function() {
+				var latestTs = $scope.getChannelMessages($scope.currentChannelId)[0].ts;
+				SlackService.getChannelHistory($scope.currentChannelType, $scope.currentChannelId, latestTs);
+			};
 			
 			$scope.showCurrentMembers = function() {
 				var modalInstance = $modal.open({

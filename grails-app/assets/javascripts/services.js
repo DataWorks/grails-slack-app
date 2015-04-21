@@ -4,6 +4,7 @@
 			var messageId = 1;
 			var service = {};
 			var messageListener = $q.defer(), 
+				historicalMessageListener = $q.defer(), 
 				presenceChangeListener = $q.defer(), 
 				initialInfoListener = $q.defer();
 			var socket = {
@@ -19,6 +20,10 @@
 			service.receiveMessage = function() {
 				return messageListener.promise;
 			};
+			
+			service.receiveHistoricalMessages = function() {
+				return historicalMessageListener.promise;
+			}
 			
 			service.receivePresenceChange = function() {
 				return presenceChangeListener.promise;
@@ -40,7 +45,11 @@
 			};
 			
 			var processMessage = function(obj) {
-				if (obj.type == 'message' && obj.subtype != 'bot_message') {
+				if (!obj.type && obj.reply_to) {
+					obj.type = 'confirmation';
+				}
+				
+				if ((obj.type == 'message' && obj.subtype != 'bot_message') || (obj.type == 'confirmation')) {
 					obj.date = new Date(new Number(obj.ts) * 1000);
 					messageListener.notify(obj);
 				} else if (obj.type == 'connect') {
@@ -50,13 +59,18 @@
 				}
 			};
 			
-			service.getChannelHistory = function(channelType, channelId) {
-				$http.get('slackChannel/listChannelHistory', {params: {channelType: channelType, channel: channelId}}).
+			service.getChannelHistory = function(channelType, channelId, latest) {
+				$http.get('slackChannel/listChannelHistory', 
+						{params: {channelType: channelType, channel: channelId, latest: latest, limit: 50}}).
 				success(function(data, status, headers, config) {
 					angular.forEach(data.rows, function(obj) {
 						obj.channel = channelId;
-						processMessage(obj);
+						obj.date = new Date(new Number(obj.ts) * 1000);
 					});
+
+					if (data.rows.length > 0) {
+						historicalMessageListener.notify({channel: channelId, messages: data.rows, hasMore: data.hasMore});
+					}
 				}).
 				error(function(data, status, headers, config) {
 					$modal.open({
