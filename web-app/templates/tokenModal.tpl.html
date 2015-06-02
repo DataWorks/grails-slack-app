@@ -6,6 +6,13 @@ when you are logged in and generating a token under the Authentication section.<
 
 <input type="text" class="token-input" ng-model="token"/>
 
+<div>
+<input type="checkbox" ng-model="checked"/> <span>This token is for an additional team</span>
+</div>
+<div ng-show="checked">
+ <span>Team Name</span><input type="text" class="token-team-input" ng-model="tokenTeam"/>
+</div>
+
 <div class="window-buttons">
 	<button ng-click="submit()">Submit</button>
 	<button ng-click="cancel()">Cancel</button>
