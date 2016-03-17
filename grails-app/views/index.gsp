@@ -38,7 +38,7 @@
 			</ul>
 			<header>DIRECT MESSAGES</header>
 			<ul class="ims">
-				<li ng-repeat="im in ims | orderBy:getImUserName" ng-class="getChannelClass('im', getImUserName(im))"
+				<li ng-repeat="im in ims | removeDeleted:getUserDeleted | orderBy:getImUserName" ng-class="getChannelClass('im', getImUserName(im))"
 					ng-click="changeChannel('im', im.id, getImUserName(im))">
 					<div ng-cloak ng-class="getImPresenceClass(im)">{{getImUserName(im)}}<span class="unread-count" ng-show="im.unread_count > 0">{{im.unread_count}}</span></div>
 				</li>
@@ -90,5 +90,6 @@
 	<asset:javascript src="app.js" />
 	<asset:javascript src="controllers.js" />
 	<asset:javascript src="services.js" />
+	<asset:javascript src="filters.js" />
 </body>
 </html>

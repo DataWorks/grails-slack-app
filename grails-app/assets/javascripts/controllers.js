@@ -195,6 +195,10 @@
 				return $scope.users[im.user].name;
 			};
 			
+			$scope.getUserDeleted = function(user) {
+				return $scope.users[user].deleted;
+			};
+			
 			$scope.getImPresenceClass = function(im) {
 				return $scope.users[im.user].presence == 'active' ? 'active-user' : '';
 			};
