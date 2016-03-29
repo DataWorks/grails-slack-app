@@ -150,7 +150,7 @@
 			};
 			
 			$scope.formatMessageHtml = function(message) {
-				message.text = message.text.replace(/(?:\r\n|\r|\n)/g, '<br />');
+				message.text = (message.text || '').replace(/(?:\r\n|\r|\n)/g, '<br />');
 				message.text = $sce.trustAsHtml(message.text);
 			};
 			
@@ -277,7 +277,7 @@
 				if (message.subtype == 'channel_join') {
 					message.text = 'joined ' + $scope.findChannel(message.channel).name;
 				} else {
-					message.text = message.text.replace(/<(.*?)>/g, function(wholeMatch, matchText) {
+					message.text = (message.text || '').replace(/<(.*?)>/g, function(wholeMatch, matchText) {
 						var linkMatch = /^(#|@)(\w+)(\|(.+))?/.exec(matchText);
 						if (linkMatch) {
 							var textToDisplay = linkMatch[0];
