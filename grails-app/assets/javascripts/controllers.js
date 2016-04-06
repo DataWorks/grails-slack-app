@@ -21,6 +21,10 @@
 			$scope.pageVisible = true;
 			$scope.unseenMessages = false;
 			
+			$scope.currentPingId = 0;
+			$scope.lastPingId = 0;
+			$scope.lastPongId = 0;
+			
 			var lastReadMessages = {};
 
 			//$scope.allMessages = {'enter test channel here': getAllTestMessages()};
@@ -67,8 +71,15 @@
 				return Math.round(new Date().getTime() / 1000);
 			};
 			
+			$scope.pongsOk = function() {
+				return ($scope.lastPongId == $scope.lastPingId || $scope.lastPongId == $scope.currentPingId);
+			};
+			
 			$scope.updatePageTitle = function() {
 				var prefix = $scope.unseenMessages ? '* ' : '';
+				if (!$scope.pongsOk()) {
+					prefix = '!! ' + prefix;
+				}
 				$scope.pageTitle = prefix + $scope.currentChannelName;
 			};
 			
@@ -169,6 +180,7 @@
 				
 				if ($scope.currentChannelId == channel) {
 					$scope.currentChannelHasMore = hasMore;
+					$scope.updateLastReadMessage();
 				}
 			};
 			
@@ -225,8 +237,18 @@
 			}, 10 * 1000);
 			
 			$interval(function() {
-				SlackService.send({type: 'ping'});
+				$scope.lastPingId = $scope.currentPingId;
+				$scope.currentPingId = SlackService.send({type: 'ping'});
+				
+				if (!$scope.pongsOk()) {
+					$scope.updatePageTitle();
+				}
 			}, 60 * 1000);
+			
+
+			SlackService.receivePong().then(null, null, function(info) {
+				$scope.lastPongId = info.reply_to;
+			});
 			
 			var filterIncomingChannels = function(channels) {
 				var filteredChannels = [];

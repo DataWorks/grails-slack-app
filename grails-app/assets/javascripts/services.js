@@ -6,7 +6,8 @@
 			var messageListener = $q.defer(), 
 				historicalMessageListener = $q.defer(), 
 				presenceChangeListener = $q.defer(), 
-				initialInfoListener = $q.defer();
+				initialInfoListener = $q.defer(),
+				pongListener = $q.defer();
 			var socket = {
 				client : null,
 				stomp : null
@@ -32,6 +33,10 @@
 			service.receiveInitialInfo = function() {
 				return initialInfoListener.promise;
 			};
+			
+			service.receivePong = function() {
+				return pongListener.promise;
+			}
 
 			service.send = function(message) {
 				var headers = {
@@ -56,6 +61,8 @@
 					initialInfoListener.notify(obj);
 				} else if (obj.type == 'presence_change') {
 					presenceChangeListener.notify(obj);
+				} else if (obj.type == 'pong') {
+					pongListener.notify(obj);
 				}
 			};
 			
