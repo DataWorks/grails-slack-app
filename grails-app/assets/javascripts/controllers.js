@@ -13,7 +13,6 @@
 			
 			$scope.channels = [];
 			$scope.ims = [];
-			$scope.groups = [];
 			$scope.allMessages = {};
 			$scope.messageHistoryRetrieved = {};
 			$scope.unconfirmedMessages = {};
@@ -111,6 +110,10 @@
 					$scope.currentChannelName == channelName ? 'current-channel' : '';
 			};
 			
+			$scope.getChannelSymbol = function(channelType) {
+				return channelType == 'channel' ? '#' : '~';
+			};
+			
 			$scope.findChannel = function(channelId) {
 				var foundChannel;
 				
@@ -137,8 +140,8 @@
 			}
 			
 			$scope.iterateChannels = function(callback) {
-				for (var j = 0; j < 3; j++) {
-					var channelGroup = [$scope.channels, $scope.ims, $scope.groups][j];
+				for (var j = 0; j < 2; j++) {
+					var channelGroup = [$scope.channels, $scope.ims][j];
 					for (var i = 0; i < channelGroup.length; i++) {
 						if (callback(channelGroup[i]) === false) {
 							return;
@@ -250,10 +253,11 @@
 				$scope.lastPongId = info.reply_to;
 			});
 			
-			var filterIncomingChannels = function(channels) {
+			var filterIncomingChannels = function(channels, type) {
 				var filteredChannels = [];
 				
 				angular.forEach(channels, function(channel) {
+					channel.type = type;
 					if (channel.unread_count_display == 0) {
 						channel.unread_count = 0;
 					}
@@ -266,9 +270,9 @@
 			SlackService.receiveInitialInfo().then(null, null, function(info) {
 				$scope.self = info.self;
 				
-				$scope.channels = filterIncomingChannels(info.channels);
-				$scope.ims = filterIncomingChannels(info.ims);
-				$scope.groups = filterIncomingChannels(info.groups);
+				$scope.channels = filterIncomingChannels(info.channels, 'channel');
+				$scope.channels = $scope.channels.concat(filterIncomingChannels(info.groups, 'group'));
+				$scope.ims = filterIncomingChannels(info.ims, 'im');
 				
 				angular.forEach(info.users, function(user) {
 					$scope.users[user.id] = user;

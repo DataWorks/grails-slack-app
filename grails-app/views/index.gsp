@@ -31,9 +31,9 @@
 		<div class="sidebar">
 			<header>CHANNELS</header>
 			<ul class="channels">
-				<li ng-repeat="channel in channels | orderBy:name" ng-class="getChannelClass('channel', channel.name)" 
-					ng-click="changeChannel('channel', channel.id, channel.name)">
-					<div ng-cloak>#&nbsp;{{channel.name}}<span class="unread-count" ng-show="channel.unread_count > 0">{{channel.unread_count}}</span></div>
+				<li ng-repeat="channel in channels | orderBy:'name'" ng-class="getChannelClass(channel.type, channel.name)" 
+					ng-click="changeChannel(channel.type, channel.id, channel.name)">
+					<div ng-cloak>{{getChannelSymbol(channel.type)}}&nbsp;{{channel.name}}<span class="unread-count" ng-show="channel.unread_count > 0">{{channel.unread_count}}</span></div>
 				</li>
 			</ul>
 			<header>DIRECT MESSAGES</header>
@@ -41,13 +41,6 @@
 				<li ng-repeat="im in ims | removeDeleted:getUserDeleted | orderBy:getImUserName" ng-class="getChannelClass('im', getImUserName(im))"
 					ng-click="changeChannel('im', im.id, getImUserName(im))">
 					<div ng-cloak ng-class="getImPresenceClass(im)">{{getImUserName(im)}}<span class="unread-count" ng-show="im.unread_count > 0">{{im.unread_count}}</span></div>
-				</li>
-			</ul>
-			<header>PRIVATE GROUPS</header>
-			<ul class="groups">
-				<li ng-repeat="group in groups | orderBy:name" ng-class="getChannelClass('group', group.name)"
-					ng-click="changeChannel('group', group.id, group.name)">
-					<div ng-cloak>{{group.name}}<span class="unread-count" ng-show="group.unread_count > 0">{{group.unread_count}}</span></div>
 				</li>
 			</ul>
 		</div>
