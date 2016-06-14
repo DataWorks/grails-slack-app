@@ -278,6 +278,11 @@
 					$scope.users[user.id] = user;
 				});
 				
+				angular.forEach(info.bots, function(bot) {
+					$scope.users[bot.id] = bot;
+					$scope.users[bot.id].profile = $scope.users[bot.id].icons;
+				});
+				
 				angular.forEach($scope.channels, function(channel) {
 					if (channel.name == 'general') {
 						$scope.changeChannel('channel', channel.id, 'general');
@@ -297,14 +302,24 @@
 			};
 			
 			$scope.processMessage = function(message, lastMessage) {
+				if (!message.user && message.bot_id) {
+					message.user = message.bot_id;
+				}
 				message.userChange = $scope.isUserChange(message, lastMessage);
 				message.dayChange = $scope.isDayChange(message, lastMessage);
 				
 				if (message.subtype == 'channel_join') {
 					message.text = 'joined ' + $scope.findChannel(message.channel).name;
 				} else {
+					if (!message.text && message.attachments) {
+						message.text = '';
+						angular.forEach(message.attachments, function(attachment) {
+							message.text += attachment.fallback;
+						});
+					}
+					
 					message.text = (message.text || '').replace(/<(.*?)>/g, function(wholeMatch, matchText) {
-						var linkMatch = /^(#|@)(\w+)(\|(.+))?/.exec(matchText);
+						var linkMatch = /^(#|@|!)([a-zA-Z0-9_^{} ]+)(\|(.+))?/.exec(matchText);
 						if (linkMatch) {
 							var textToDisplay = linkMatch[0];
 							
