@@ -98,23 +98,35 @@
 				}, this.RECONNECT_TIMEOUT);
 			};
 
-			var startListener = function() {
+			var startListener = function(skipInitialInfo) {
 				socket.stomp.subscribe(service.CHAT_TOPIC, function(data) {
 					var obj = JSON.parse(data.body);
 					processMessage(obj);
 				});
 				
-				service.send({
-					type: 'initialInfo'
-				});
+				if (!skipInitialInfo) {
+					service.send({
+						type: 'initialInfo'
+					});
+				}
 			};
 
-			var initialize = function() {
+			var initialize = function(skipInitialInfo) {
+				if (socket.stomp && socket.stomp.connected) {
+					socket.stomp.disconnect();
+				}
+				if (socket.client && socket.client.readyState == 1) {
+					socket.client.close();
+				}
 				socket.client = new SockJS(service.SOCKET_URL);
 				socket.stomp = Stomp.over(socket.client);
-				socket.stomp.connect({}, startListener);
+				socket.stomp.connect({}, function() {
+					startListener(skipInitialInfo);
+				});
 				socket.stomp.onclose = reconnect;
 			};
+			
+			service.initialize = initialize;
 
 			initialize();
 			return service;

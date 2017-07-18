@@ -23,6 +23,7 @@
 			$scope.currentPingId = 0;
 			$scope.lastPingId = 0;
 			$scope.lastPongId = 0;
+			$scope.pongsGood = true;
 			
 			var lastReadMessages = {};
 
@@ -78,6 +79,9 @@
 				var prefix = $scope.unseenMessages ? '* ' : '';
 				if (!$scope.pongsOk()) {
 					prefix = '!! ' + prefix;
+					$scope.pongsGood = false;
+				} else {
+					$scope.pongsGood = true;
 				}
 				$scope.pageTitle = prefix + $scope.currentChannelName;
 			};
@@ -245,6 +249,10 @@
 				
 				if (!$scope.pongsOk()) {
 					$scope.updatePageTitle();
+					console.log("Reinitializing service");
+					SlackService.initialize(true);
+				} else if (!$scope.pongsGood) {
+					$scope.updatePageTitle();
 				}
 			}, 60 * 1000);
 			
@@ -292,7 +300,7 @@
 			});
 			
 			$scope.updateLastReadMessage = function() {
-				if ($scope.messages.length > 0) {
+				if ($scope.messages && $scope.messages.length > 0) {
 					lastReadMessages[$scope.currentChannelId] = {
 						channelType: $scope.currentChannelType,
 						channelId: $scope.currentChannelId,
@@ -370,7 +378,7 @@
 				$scope.processMessage(message);
 				$scope.addMessageToChannel(message);
 				
-				if ($scope.currentChannelId != message.channel && message.ts > channel.last_read) {
+				if ($scope.currentChannelId != message.channel && channel && message.ts > channel.last_read) {
 					channel.unread_count++;
 				} else if ($scope.pageVisible) {
 					$scope.updateLastReadMessage();
